@@ -1,0 +1,68 @@
+# 依赖
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 环境变量
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 数据库文件
+database/finance.db
+database/*.db
+database/*.db-journal
+database/*.sqlite
+database/*.sqlite3
+
+# 构建输出
+dist/
+build/
+out/
+*.exe
+*.msi
+*.zip
+
+# 日志
+logs/
+*.log
+
+# 运行时数据
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# 编辑器/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# 操作系统文件
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# 测试覆盖率
+coverage/
+.nyc_output/
+
+# 临时文件
+tmp/
+temp/
+
+# 包管理器的 lock 文件（可选，通常需要提交）
+# package-lock.json （建议提交）
+# yarn.lock （建议提交）
+
+# 自定义
+plans/deleted/
