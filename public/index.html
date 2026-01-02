@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>财务管理系统</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 20px;
+        }
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .card {
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 30px;
+        }
+        .btn-action {
+            margin-right: 5px;
+        }
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><i class="fas fa-wallet"></i> 财务管理系统</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSection('dashboard')"><i class="fas fa-home"></i> 首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSection('transactions')"><i class="fas fa-exchange-alt"></i> 交易记录</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSection('categories')"><i class="fas fa-tags"></i> 项目管理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSection('analytics')"><i class="fas fa-chart-bar"></i> 数据分析</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user"></i> <span id="username">未登录</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="showSection('profile')"><i class="fas fa-cog"></i> 个人设置</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="shutdownServer()"><i class="fas fa-power-off"></i> 关闭服务器</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> 退出登录</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 登录/注册区域 -->
+    <div id="loginSection" class="container login-container">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">登录 / 注册</h4>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs" id="authTab">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#loginTab">登录</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#registerTab">注册</a>
+                    </li>
+                </ul>
+                <div class="tab-content mt-3">
+                    <div class="tab-pane fade show active" id="loginTab">
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label for="loginUsername" class="form-label">用户名</label>
+                                <input type="text" class="form-control" id="loginUsername" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="loginPassword" class="form-label">密码</label>
+                                <input type="password" class="form-control" id="loginPassword" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">登录</button>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="registerTab">
+                        <form id="registerForm">
+                            <div class="mb-3">
+                                <label for="registerUsername" class="form-label">用户名</label>
+                                <input type="text" class="form-control" id="registerUsername" required>
+                                <div class="form-text">用户名长度3-30个字符</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="registerPassword" class="form-label">密码</label>
+                                <input type="password" class="form-control" id="registerPassword" required>
+                                <div class="form-text">密码至少6个字符</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="registerEmail" class="form-label">邮箱（可选）</label>
+                                <input type="email" class="form-control" id="registerEmail">
+                                <div class="form-text">可选，请输入有效的邮箱地址</div>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">注册</button>
+                        </form>
+                    </div>
+                </div>
+                <div id="authMessage" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主内容区域（登录后显示） -->
+    <div id="mainContent" class="container hidden">
+        <!-- 首页 -->
+        <section id="dashboardSection" class="hidden">
+            <h2 class="my-4"><i class="fas fa-tachometer-alt"></i> 首页</h2>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card text-white bg-success">
+                        <div class="card-body">
+                            <h5 class="card-title">本月收入</h5>
+                            <p class="card-text display-6" id="monthIncome">0.00</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-danger">
+                        <div class="card-body">
+                            <h5 class="card-title">本月支出</h5>
+                            <p class="card-text display-6" id="monthExpense">0.00</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-info">
+                        <div class="card-body">
+                            <h5 class="card-title">本月结余</h5>
+                            <p class="card-text display-6" id="monthBalance">0.00</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-white bg-warning">
+                        <div class="card-body">
+                            <h5 class="card-title">交易总数</h5>
+                            <p class="card-text display-6" id="totalTransactions">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span>月度趋势</span>
+                            <div class="btn-group btn-group-sm chart-switcher" role="group">
+                                <button type="button" class="btn btn-outline-primary active" data-chart="trend" onclick="switchDashboardChart('trend')">
+                                    月度趋势
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" data-chart="comparison" onclick="switchDashboardChart('comparison')">
+                                    收支对比
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" data-chart="balance" onclick="switchDashboardChart('balance')">
+                                    余额趋势
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="trendChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span>支出分类占比</span>
+                            <div class="btn-group btn-group-sm chart-switcher" role="group">
+                                <button type="button" class="btn btn-outline-primary active" data-chart="category" onclick="switchDashboardChart('category')">
+                                    支出占比
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" data-chart="incomeCategory" onclick="switchDashboardChart('incomeCategory')">
+                                    收入占比
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="categoryChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 交易记录 -->
+        <section id="transactionsSection" class="hidden">
+            <h2 class="my-4"><i class="fas fa-exchange-alt"></i> 交易记录</h2>
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>交易列表</span>
+                    <button class="btn btn-primary btn-sm" onclick="showAddTransactionModal()"><i class="fas fa-plus"></i> 添加交易</button>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <input type="date" class="form-control" id="filterStartDate" placeholder="开始日期">
+                        </div>
+                        <div class="col-md-3">
+                            <input type="date" class="form-control" id="filterEndDate" placeholder="结束日期">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="filterCategory">
+                                <option value="">全部分类</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-secondary w-100" onclick="loadTransactions()">筛选</button>
+                        </div>
+                    </div>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>日期</th>
+                                <th>分类</th>
+                                <th>描述</th>
+                                <th>金额</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionTableBody">
+                            <!-- 动态填充 -->
+                        </tbody>
+                    </table>
+                    <nav>
+                        <ul class="pagination justify-content-center" id="transactionPagination">
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </section>
+
+        <!-- 分类管理 -->
+        <section id="categoriesSection" class="hidden">
+            <h2 class="my-4"><i class="fas fa-tags"></i> 分类管理</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">收入分类</div>
+                        <div class="card-body">
+                            <ul class="list-group" id="incomeCategoryList">
+                            </ul>
+                            <button class="btn btn-success mt-3" onclick="showAddCategoryModal('income')"><i class="fas fa-plus"></i> 添加收入分类</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">支出分类</div>
+                        <div class="card-body">
+                            <ul class="list-group" id="expenseCategoryList">
+                            </ul>
+                            <button class="btn btn-danger mt-3" onclick="showAddCategoryModal('expense')"><i class="fas fa-plus"></i> 添加支出分类</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 数据分析 -->
+        <section id="analyticsSection" class="hidden">
+            <h2 class="my-4"><i class="fas fa-chart-bar"></i> 数据分析</h2>
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#monthlyTab">月度统计</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#categoryTab">分类占比</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#comparisonTab">对比分析</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#transactionDetailTab">交易明细分析</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#trendTab">趋势分析</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="monthlyTab">
+                            <div class="chart-container">
+                                <canvas id="monthlyChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="categoryTab">
+                            <!-- 饼图筛选控件 -->
+                            <div class="row mb-4">
+                                <div class="col-md-2">
+                                    <label class="form-label">分类类型</label>
+                                    <select class="form-select" id="analyticsCategoryType">
+                                        <option value="expense">支出</option>
+                                        <option value="income">收入</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">年份</label>
+                                    <select class="form-select" id="analyticsCategoryYear">
+                                        <!-- 动态填充 -->
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">季度</label>
+                                    <select class="form-select" id="analyticsCategoryQuarter">
+                                        <option value="">全部季度</option>
+                                        <option value="Q1">Q1 (1-3月)</option>
+                                        <option value="Q2">Q2 (4-6月)</option>
+                                        <option value="Q3">Q3 (7-9月)</option>
+                                        <option value="Q4">Q4 (10-12月)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">月份</label>
+                                    <select class="form-select" id="analyticsCategoryMonth">
+                                        <option value="">全部月份</option>
+                                        <option value="1">1月</option>
+                                        <option value="2">2月</option>
+                                        <option value="3">3月</option>
+                                        <option value="4">4月</option>
+                                        <option value="5">5月</option>
+                                        <option value="6">6月</option>
+                                        <option value="7">7月</option>
+                                        <option value="8">8月</option>
+                                        <option value="9">9月</option>
+                                        <option value="10">10月</option>
+                                        <option value="11">11月</option>
+                                        <option value="12">12月</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">显示模式</label>
+                                    <select class="form-select" id="analyticsCategoryMode">
+                                        <option value="pie">饼图</option>
+                                        <option value="bar">柱状图</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button class="btn btn-primary w-100" onclick="loadCategoryAnalytics()">更新图表</button>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="categoryAnalyticsChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="comparisonTab">
+                            <!-- 对比饼图筛选控件 -->
+                            <div class="row mb-4">
+                                <div class="col-md-3">
+                                    <label class="form-label">年份</label>
+                                    <select class="form-select" id="analyticsComparisonYear">
+                                        <!-- 动态填充 -->
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">季度</label>
+                                    <select class="form-select" id="analyticsComparisonQuarter">
+                                        <option value="">全部季度</option>
+                                        <option value="Q1">Q1 (1-3月)</option>
+                                        <option value="Q2">Q2 (4-6月)</option>
+                                        <option value="Q3">Q3 (7-9月)</option>
+                                        <option value="Q4">Q4 (10-12月)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">月份</label>
+                                    <select class="form-select" id="analyticsComparisonMonth">
+                                        <option value="">全部月份</option>
+                                        <option value="1">1月</option>
+                                        <option value="2">2月</option>
+                                        <option value="3">3月</option>
+                                        <option value="4">4月</option>
+                                        <option value="5">5月</option>
+                                        <option value="6">6月</option>
+                                        <option value="7">7月</option>
+                                        <option value="8">8月</option>
+                                        <option value="9">9月</option>
+                                        <option value="10">10月</option>
+                                        <option value="11">11月</option>
+                                        <option value="12">12月</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 d-flex align-items-end">
+                                    <button class="btn btn-primary w-100" onclick="loadComparisonAnalytics()">加载对比图表</button>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="chart-container">
+                                        <canvas id="comparisonPieChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="chart-container">
+                                        <canvas id="comparisonBarChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mt-4">
+                                <div class="col-md-12">
+                                    <div class="card">
+                                        <div class="card-header">对比数据详情</div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h5>收入分类明细</h5>
+                                                    <div id="incomeCategoriesDetail" class="small">
+                                                        <!-- 动态填充 -->
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h5>支出分类明细</h5>
+                                                    <div id="expenseCategoriesDetail" class="small">
+                                                        <!-- 动态填充 -->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="transactionDetailTab">
+                            <!-- 交易明细分析筛选控件 -->
+                            <div class="row mb-4">
+                                <div class="col-md-2">
+                                    <label class="form-label">年份</label>
+                                    <select class="form-select" id="detailYear">
+                                        <!-- 动态填充 -->
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">月份</label>
+                                    <select class="form-select" id="detailMonth">
+                                        <option value="">全部月份</option>
+                                        <option value="1">1月</option>
+                                        <option value="2">2月</option>
+                                        <option value="3">3月</option>
+                                        <option value="4">4月</option>
+                                        <option value="5">5月</option>
+                                        <option value="6">6月</option>
+                                        <option value="7">7月</option>
+                                        <option value="8">8月</option>
+                                        <option value="9">9月</option>
+                                        <option value="10">10月</option>
+                                        <option value="11">11月</option>
+                                        <option value="12">12月</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">分类</label>
+                                    <select class="form-select" id="detailCategory">
+                                        <option value="">全部分类</option>
+                                        <!-- 动态填充 -->
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">类型</label>
+                                    <select class="form-select" id="detailType">
+                                        <option value="all">全部类型</option>
+                                        <option value="income">收入</option>
+                                        <option value="expense">支出</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">关键字</label>
+                                    <input type="text" class="form-control" id="detailKeyword" placeholder="描述或分类名">
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button class="btn btn-primary w-100" onclick="loadTransactionDetailAnalytics()">查询</button>
+                                </div>
+                            </div>
+                            <div class="row mb-4">
+                                <div class="col-md-2">
+                                    <label class="form-label">最小金额</label>
+                                    <input type="number" step="0.01" class="form-control" id="detailMinAmount" placeholder="0.00">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">最大金额</label>
+                                    <input type="number" step="0.01" class="form-control" id="detailMaxAmount" placeholder="999999.99">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">每页数量</label>
+                                    <select class="form-select" id="detailLimit">
+                                        <option value="10">10条</option>
+                                        <option value="20" selected>20条</option>
+                                        <option value="50">50条</option>
+                                        <option value="100">100条</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" id="detailShowSummary" checked>
+                                        <label class="form-check-label" for="detailShowSummary">显示统计摘要</label>
+                                    </div>
+                                    <button class="btn btn-outline-secondary ms-3" onclick="exportTransactionDetail()"><i class="fas fa-download"></i> 导出</button>
+                                </div>
+                            </div>
+                            
+                            <!-- 统计摘要卡片 -->
+                            <div class="row mb-4" id="detailSummarySection">
+                                <div class="col-md-12">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="row text-center">
+                                                <div class="col-md-3">
+                                                    <h6 class="text-muted">总收入</h6>
+                                                    <h4 class="text-success" id="detailTotalIncome">0.00</h4>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <h6 class="text-muted">总支出</h6>
+                                                    <h4 class="text-danger" id="detailTotalExpense">0.00</h4>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <h6 class="text-muted">结余</h6>
+                                                    <h4 class="text-primary" id="detailBalance">0.00</h4>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <h6 class="text-muted">交易数</h6>
+                                                    <h4 class="text-warning" id="detailTransactionCount">0</h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 交易明细表格 -->
+                            <div class="card">
+                                <div class="card-header">交易明细列表</div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>日期</th>
+                                                    <th>分类</th>
+                                                    <th>描述</th>
+                                                    <th>金额</th>
+                                                    <th>操作</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="detailTableBody">
+                                                <!-- 动态填充 -->
+                                                <tr id="detailEmptyRow">
+                                                    <td colspan="5" class="text-center text-muted py-5">
+                                                        <i class="fas fa-chart-bar fa-3x mb-3"></i>
+                                                        <p>请设置筛选条件并点击"查询"按钮查看交易明细</p>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    
+                                    <!-- 分页 -->
+                                    <nav aria-label="交易明细分页" id="detailPaginationContainer">
+                                        <ul class="pagination justify-content-center" id="detailPagination">
+                                            <!-- 动态填充 -->
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="trendTab">
+                            <div class="chart-container">
+                                <canvas id="trendAnalyticsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 个人设置 -->
+        <section id="profileSection" class="hidden">
+            <h2 class="my-4"><i class="fas fa-cog"></i> 个人设置</h2>
+            <div class="card">
+                <div class="card-body">
+                    <form id="profileForm">
+                        <div class="mb-3">
+                            <label class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="profileUsername" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">邮箱</label>
+                            <input type="email" class="form-control" id="profileEmail">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">新密码（留空不修改）</label>
+                            <input type="password" class="form-control" id="profilePassword">
+                        </div>
+                        <button type="submit" class="btn btn-primary">保存更改</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 添加/编辑交易模态框 -->
+    <div class="modal fade" id="transactionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="transactionModalTitle">添加交易</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="transactionForm">
+                        <input type="hidden" id="transactionId">
+                        <div class="mb-3">
+                            <label class="form-label">分类</label>
+                            <select class="form-select" id="transactionCategory" required>
+                                <option value="">请选择分类</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">金额</label>
+                            <input type="number" step="0.01" class="form-control" id="transactionAmount" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">描述</label>
+                            <input type="text" class="form-control" id="transactionDescription">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">日期</label>
+                            <input type="date" class="form-control" id="transactionDate" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveTransaction()" id="transactionSaveButton">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加分类模态框 -->
+    <div class="modal fade" id="categoryModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加分类</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="categoryForm">
+                        <div class="mb-3">
+                            <label class="form-label">名称</label>
+                            <input type="text" class="form-control" id="categoryName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">类型</label>
+                            <select class="form-select" id="categoryType" required>
+                                <option value="income">收入</option>
+                                <option value="expense">支出</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">颜色</label>
+                            <input type="color" class="form-control" id="categoryColor" value="#007bff">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveCategory()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑分类模态框 -->
+    <div class="modal fade" id="editCategoryModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑分类</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editCategoryForm">
+                        <input type="hidden" id="editCategoryId">
+                        <div class="mb-3">
+                            <label class="form-label">名称</label>
+                            <input type="text" class="form-control" id="editCategoryName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">类型</label>
+                            <select class="form-select" id="editCategoryType" required>
+                                <option value="income">收入</option>
+                                <option value="expense">支出</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">颜色</label>
+                            <input type="color" class="form-control" id="editCategoryColor" value="#007bff">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="updateCategory()">更新</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS 和 Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- 自定义 JS -->
+    <script src="js/app.js"></script>
+</body>
+</html>
